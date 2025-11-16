@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Listas para Pi-hole</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', 'Fira Code', monospace;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(30, 30, 46, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(137, 80, 252, 0.3);
+            overflow: hidden;
+            border: 1px solid #8950fc;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        .pihole-icon {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            color: #a8e6cf;
+        }
+        
+        nav {
+            background: rgba(16, 185, 129, 0.95);
+            padding: 18px 0;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #059669;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 35px;
+            gap: 35px;
+        }
+        
+        .sidebar {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(42, 42, 62, 0.8);
+            padding: 28px;
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .content {
+            flex: 3;
+            min-width: 320px;
+        }
+        
+        h2 {
+            color: #10b981;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 15px;
+            margin: 35px 0 25px;
+            font-size: 2rem;
+        }
+        
+        h3 {
+            color: #34d399;
+            margin: 28px 0 18px;
+            font-size: 1.4rem;
+        }
+        
+        .category {
+            margin-bottom: 45px;
+            background: rgba(42, 42, 62, 0.6);
+            padding: 28px;
+            border-radius: 12px;
+            border-left: 6px solid #10b981;
+            transition: transform 0.3s ease;
+        }
+        
+        .category:hover {
+            transform: translateX(5px);
+        }
+        
+        .list-item {
+            background: linear-gradient(135deg, rgba(42, 42, 62, 0.8) 0%, rgba(30, 30, 46, 0.8) 100%);
+            padding: 20px;
+            margin: 18px 0;
+            border-radius: 10px;
+            border-left: 5px solid #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .list-item:hover {
+            border-color: #34d399;
+            box-shadow: 0 6px 20px rgba(52, 211, 153, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .list-item code {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            color: #34d399;
+            font-weight: bold;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: inline-block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            word-break: break-all;
+        }
+        
+        .list-desc {
+            margin-top: 12px;
+            color: #a8e6cf;
+            line-height: 1.6;
+        }
+        
+        .sub-list {
+            margin-left: 28px;
+            background: rgba(30, 30, 46, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 8px;
+            border-left: 3px solid #a8e6cf;
+        }
+        
+        .sub-list code {
+            color: #a8e6cf;
+            background: rgba(168, 230, 207, 0.1);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: rgba(42, 42, 62, 0.95);
+            color: #a8e6cf;
+            margin-top: 50px;
+            border-top: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .search-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        #search {
+            width: 100%;
+            max-width: 550px;
+            padding: 18px 25px;
+            background: rgba(30, 30, 46, 0.8);
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            border-radius: 30px;
+            font-size: 16px;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+        
+        #search:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+        }
+        
+        #search::placeholder {
+            color: #888;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: #000;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        
+        .pihole-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+
+        .security-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+
+        .privacy-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+        
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                margin-right: 0;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* Efectos especiales */
+        .terminal-effect {
+            position: relative;
+        }
+        
+        .terminal-effect::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: #10b981;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 14px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 30, 46, 0.8);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 8px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+        
+        /* Índice mejorado */
+        .index-item {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            background: rgba(42, 42, 62, 0.8);
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            transition: all 0.3s ease;
+        }
+        
+        .index-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+        
+        .index-link {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+        }
+        
+        .index-link:hover {
+            color: #10b981;
+        }
+
+        /* Grid para listas */
+        .list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .list-card {
+            background: rgba(42, 42, 62, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #10b981;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .list-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .list-card code {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            word-break: break-all;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            color: #a8e6cf;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .note {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #fcd34d;
+        }
+
+        .warning {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #fca5a5;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pi-hole <span class="pihole-icon">⦿</span> Blocklists</h1>
+            <p class="subtitle">Listas completas de bloqueo para protección y privacidad</p>
+        </header>
+        
+        <nav>
+            <div class="nav-container">
+                <a href="#general" class="nav-item">Listas Generales</a>
+                <a href="#privacy" class="nav-item">Privacidad</a>
+                <a href="#security" class="nav-item">Seguridad</a>
+                <a href="#devices" class="nav-item">Dispositivos IoT</a>
+                <a href="#content" class="nav-item">Contenido</a>
+            </div>
+        </nav>
+        
+        <div class="search-container">
+            <input type="text" id="search" placeholder="pihole@raspberrypi:~$ Buscar listas de bloqueo...">
+        </div>
+        
+        <main>
+            <div class="sidebar">
+                <h2>Índice de Categorías</h2>
+                <div id="index-list">
+                    <!-- El índice se generará automáticamente con JavaScript -->
+                </div>
+            </div>
+            
+            <div class="content" id="content">
+                <!-- Listas Generales -->
+                <div class="category" id="general">
+                    <h2>Listas Generales de Bloqueo <span class="pihole-badge">GENERAL</span></h2>
+                    
+                    <div class="list-item">
+                        <code>https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts</code>
+                        <div class="list-desc">Lista maestra de hosts - Combina múltiples fuentes de bloqueo</div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <code>https://v.firebog.net/hosts/AdguardDNS.txt</code>
+                        <div class="list-desc">Lista de AdguardDNS - Filtrado de anuncios y trackers</div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <code>https://v.firebog.net/hosts/Easyprivacy.txt</code>
+                        <div class="list-desc">EasyPrivacy - Protección avanzada de privacidad</div>
+                    </div>
+
+                    <div class="note">
+                        💡 <strong>Nota:</strong> Estas listas generales proporcionan una base sólida para el bloqueo de anuncios y trackers.
+                    </div>
+                </div>
+
+                <!-- Listas de Seguridad -->
+                <div class="category" id="security">
+                    <h2>Listas de Seguridad <span class="security-badge">SECURITY</span></h2>
+                    
+                    <div class="list-item">
+                        <code>https://raw.githubusercontent.com/mike-trewartha/Pi-hole-Talos-Threat-Blocklist/refs/heads/main/talos-threats.list</code>
+                        <div class="list-desc">Lista de amenazas Talos - Protección contra malware y phishing</div>
+                    </div>
+
+                    <div class="warning">
+                        ⚠️ <strong>Importante:</strong> Las listas de seguridad pueden bloquear dominios legítimos. Monitorea los logs después de agregarlas.
+                    </div>
+                </div>
+
+                <!-- Listas de Privacidad -->
+                <div class="category" id="privacy">
+                    <h2>Listas de Privacidad <span class="privacy-badge">PRIVACY</span></h2>
+                    
+                    <h3>Listas OISD (Comprehensive)</h3>
+                    <div class="list-grid">
+                        <div class="list-card">
+                            <code>https://big.oisd.nl</code>
+                            <div class="card-desc">OISD Big - Lista completa de bloqueo</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://nsfw.oisd.nl</code>
+                            <div class="card-desc">OISD NSFW - Contenido para adultos</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/sjhgvr/oisd/main/domainswild2_big.txt</code>
+                            <div class="card-desc">OISD Domains Wild Big - Versión alternativa</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/sjhgvr/oisd/main/domainswild2_nsfw.txt</code>
+                            <div class="card-desc">OISD Domains Wild NSFW - Versión alternativa</div>
+                        </div>
+                    </div>
+
+                    <div class="note">
+                        🔒 <strong>OISD:</strong> Estas listas están optimizadas para minimizar falsos positivos mientras mantienen una protección efectiva.
+                    </div>
+                </div>
+
+                <!-- Dispositivos IoT y Smart TV -->
+                <div class="category" id="devices">
+                    <h2>Dispositivos IoT y Smart TV <span class="pihole-badge">IoT</span></h2>
+                    
+                    <h3>Smart TVs General</h3>
+                    <div class="list-grid">
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt</code>
+                            <div class="card-desc">Lista general para Smart TVs</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://blocklistproject.github.io/Lists/alt-version/smart-tv-nl.txt</code>
+                            <div class="card-desc">Smart TVs - Versión alternativa</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hkamran80/blocklists/main/smart-tv.txt</code>
+                            <div class="card-desc">Smart TVs - Lista adicional</div>
+                        </div>
+                    </div>
+
+                    <h3>Dispositivos Específicos</h3>
+                    <div class="list-grid">
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt</code>
+                            <div class="card-desc">Amazon Fire TV - Bloqueo de telemetría</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/mboutolleau/block-samsung-tv-telemetry/refs/heads/master/samsung_tv_telemetry_urls.txt</code>
+                            <div class="card-desc">Samsung TV - Telemetría y tracking</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.lgwebos.txt</code>
+                            <div class="card-desc">LG WebOS - Dispositivos LG Smart TV</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.oppo-realme.txt</code>
+                            <div class="card-desc">Oppo/Realme - Dispositivos móviles</div>
+                        </div>
+                    </div>
+
+                    <div class="note">
+                        📺 <strong>Smart TVs:</strong> Estas listas bloquean la telemetría y anuncios en televisiones inteligentes.
+                    </div>
+                </div>
+
+                <!-- Listas de Contenido Específico -->
+                <div class="category" id="content">
+                    <h2>Contenido Específico <span class="privacy-badge">CONTENT</span></h2>
+                    
+                    <h3>YouTube y Plataformas</h3>
+                    <div class="list-grid">
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/kboghdady/youTube_ads_4_pi-hole/master/youtubelist.txt</code>
+                            <div class="card-desc">YouTube Ads - Bloqueo de anuncios en YouTube</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.tiktok.extended.txt</code>
+                            <div class="card-desc">TikTok Extended - Bloqueo completo de TikTok</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.amazon.txt</code>
+                            <div class="card-desc">Amazon - Tracking y anuncios</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.apple.txt</code>
+                            <div class="card-desc">Apple - Telemetría y servicios</div>
+                        </div>
+                    </div>
+
+                    <h3>Listas NSFW (Contenido para Adultos)</h3>
+                    <div class="list-grid">
+                        <div class="list-card">
+                            <code>https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/nsfw.txt</code>
+                            <div class="card-desc">NSFW - Formato AdBlock</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/dnsmasq/nsfw.txt</code>
+                            <div class="card-desc">NSFW - Formato DNSMasq</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw.txt</code>
+                            <div class="card-desc">NSFW - Formato Wildcard</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw-onlydomains.txt</code>
+                            <div class="card-desc">NSFW - Solo dominios (Wildcard)</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/rpz/nsfw.txt</code>
+                            <div class="card-desc">NSFW - Formato RPZ</div>
+                        </div>
+                    </div>
+
+                    <h3>Listas TIF (Threat Intelligence Feeds)</h3>
+                    <div class="list-grid">
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/tif.txt</code>
+                            <div class="card-desc">TIF - Dominios</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/tif.txt</code>
+                            <div class="card-desc">TIF - Formato hosts</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/tif-compressed.txt</code>
+                            <div class="card-desc">TIF - Hosts comprimido</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt</code>
+                            <div class="card-desc">TIF - Formato AdBlock</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/dnsmasq/tif.txt</code>
+                            <div class="card-desc">TIF - Formato DNSMasq</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.txt</code>
+                            <div class="card-desc">TIF - Formato Wildcard</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif-onlydomains.txt</code>
+                            <div class="card-desc">TIF - Solo dominios (Wildcard)</div>
+                        </div>
+                        <div class="list-card">
+                            <code>https://raw.githubusercontent.com/hagezi/dns-blocklists/main/rpz/tif.txt</code>
+                            <div class="card-desc">TIF - Formato RPZ</div>
+                        </div>
+                    </div>
+
+                    <div class="warning">
+                        🚫 <strong>NSFW/TIF:</strong> Estas listas son muy agresivas y pueden bloquear contenido legítimo. Úsalas con precaución.
+                    </div>
+                </div>
+
+                <!-- Guía de Uso -->
+                <div class="category" id="guia">
+                    <h2>Guía de Configuración <span class="pihole-badge">GUIDE</span></h2>
+                    
+                    <div class="list-item">
+                        <code>Admin Panel → Group Management → Adlists</code>
+                        <div class="list-desc">Navega a esta sección en el panel de Pi-hole</div>
+                    </div>
+
+                    <div class="list-item">
+                        <code>Pegar URL → Add</code>
+                        <div class="list-desc">Copia y pega cada URL de la lista y haz clic en Add</div>
+                    </div>
+
+                    <div class="list-item">
+                        <code>Tools → Update Gravity</code>
+                        <div class="list-desc">Actualiza Gravity para aplicar los cambios</div>
+                    </div>
+
+                    <h3>Recomendaciones</h3>
+                    <div class="sub-list">
+                        <strong>Para uso doméstico:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; color: #a8e6cf;">
+                            <li>Listas Generales (StevenBlack, AdguardDNS)</li>
+                            <li>Smart TV lists (opcional)</li>
+                            <li>YouTube Ads (si ves mucho YouTube)</li>
+                        </ul>
+                    </div>
+
+                    <div class="sub-list">
+                        <strong>Para máxima protección:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; color: #a8e6cf;">
+                            <li>Todas las listas generales</li>
+                            <li>Listas de seguridad</li>
+                            <li>Listas OISD</li>
+                            <li>Listas de dispositivos IoT</li>
+                        </ul>
+                    </div>
+
+                    <div class="note">
+                        ⚡ <strong>Rendimiento:</strong> Mientras más listas agregues, más memoria RAM usará Pi-hole. Monitorea el rendimiento de tu dispositivo.
+                    </div>
+
+                    <div class="warning">
+                        🔍 <strong>Falsos positivos:</strong> Después de agregar nuevas listas, revisa los logs de consultas bloqueadas para identificar falsos positivos y agregarlos a la whitelist si es necesario.
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Pi-hole Blocklists Manual &copy; 2024 - Network-wide Ad Blocking</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: #10b981;">Block Ads. Everywhere.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Generar índice automáticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const categories = document.querySelectorAll('.category');
+            const indexList = document.getElementById('index-list');
+            
+            categories.forEach(category => {
+                const categoryId = category.id;
+                const categoryTitle = category.querySelector('h2').textContent;
+                
+                const listItem = document.createElement('div');
+                listItem.className = 'index-item';
+                
+                const link = document.createElement('a');
+                link.href = `#${categoryId}`;
+                
+                // Iconos diferentes para cada categoría
+                let icon = '📋';
+                if (categoryId === 'security') icon = '🛡️';
+                else if (categoryId === 'privacy') icon = '🔒';
+                else if (categoryId === 'devices') icon = '📺';
+                else if (categoryId === 'content') icon = '🚫';
+                else if (categoryId === 'guia') icon = '📖';
+                
+                link.textContent = `${icon} ${categoryTitle.replace('GENERAL', '').replace('SECURITY', '').replace('PRIVACY', '').replace('IoT', '').replace('CONTENT', '').replace('GUIDE', '').trim()}`;
+                link.className = 'index-link';
+                
+                listItem.appendChild(link);
+                indexList.appendChild(listItem);
+            });
+            
+            // Funcionalidad de búsqueda
+            const searchInput = document.getElementById('search');
+            const listItems = document.querySelectorAll('.list-item');
+            const listCards = document.querySelectorAll('.list-card');
+            const notes = document.querySelectorAll('.note, .warning');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                // Buscar en list items
+                listItems.forEach(item => {
+                    const itemText = item.textContent.toLowerCase();
+                    const itemCode = item.querySelector('code');
+                    
+                    // Remover resaltado anterior
+                    if (itemCode) {
+                        itemCode.innerHTML = itemCode.textContent;
+                    }
+                    
+                    if (searchTerm === '') {
+                        item.style.display = 'block';
+                    } else if (itemText.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        
+                        // Resaltar término de búsqueda
+                        if (itemCode) {
+                            const regex = new RegExp(searchTerm, 'gi');
+                            itemCode.innerHTML = itemCode.textContent.replace(regex, match => 
+                                `<span class="highlight">${match}</span>`
+                            );
+                        }
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                // Buscar en list cards
+                listCards.forEach(card => {
+                    const cardText = card.textContent.toLowerCase();
+                    const cardCode = card.querySelector('code');
+                    
+                    // Remover resaltado anterior
+                    if (cardCode) {
+                        cardCode.innerHTML = cardCode.textContent;
+                    }
+                    
+                    if (searchTerm === '') {
+                        card.style.display = 'block';
+                    } else if (cardText.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        
+                        // Resaltar término de búsqueda
+                        if (cardCode) {
+                            const regex = new RegExp(searchTerm, 'gi');
+                            cardCode.innerHTML = cardCode.textContent.replace(regex, match => 
+                                `<span class="highlight">${match}</span>`
+                            );
+                        }
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Buscar en notas y advertencias
+                notes.forEach(note => {
+                    const noteText = note.textContent.toLowerCase();
+                    
+                    if (searchTerm === '') {
+                        note.style.display = 'block';
+                    } else if (noteText.includes(searchTerm)) {
+                        note.style.display = 'block';
+                    } else {
+                        note.style.display = 'none';
+                    }
+                });
+            });
+
+            // Efecto de terminal en la búsqueda
+            searchInput.placeholder = "pihole@raspberrypi:~$ Buscar listas de bloqueo...";
+        });
+
+        // Efecto de escritura en el título
+        document.addEventListener('DOMContentLoaded', function() {
+            const title = document.querySelector('h1');
+            title.classList.add('terminal-effect');
+        });
+    </script>
+</body>
+</html>
